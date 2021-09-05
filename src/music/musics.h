@@ -5,14 +5,13 @@
  * @ref https://github.com/akafael/arduino-music
  */
 
-
 #define TONE_USE_INT
 #define TONE_PITCH 440
-#include <Pitch.h> // Required for tone()
+#include <Pitch.h> // Required for NOTE_XX 
 
 #define REST 0
 
-// notes of the moledy followed by the duration.
+// notes of the melody followed by the duration.
 // a 4 means a quarter note, 8 an eighteenth , 16 sixteenth, so on
 // !!negative numbers are used to represent dotted notes,
 // so -4 means a dotted quarter note, that is, a quarter plus an eighteenth!!
@@ -114,3 +113,37 @@
   NOTE_G4,-2, REST,4\
 }
 #define ASA_BRANCA_TEMPO 120
+
+/**
+ * Play Music Score
+ * @author 
+ */
+void playMusic( int currentNote, const int *melodySong, const int wholenote, int buzzer_pin )
+{
+  // sizeof gives the number of bytes, each int value is composed of two bytes (16 bits)
+  // there are two values per note (pitch and duration), so for each note there are four bytes
+  const int notes = sizeof(melodySong) / sizeof(melodySong[0]) / 2;
+  
+  // iterate over the notes of the melody.
+  // Remember, the array is twice the number of notes (notes + durations)
+  int thisNote = (currentNote < notes * 2)? currentNote + 2 : 0;
+
+  // calculates the duration of each note
+  const int divider = melodySong[thisNote + 1];
+
+  int noteDuration = (wholenote) / divider;
+
+  if (divider < 0) {
+    // dotted notes are represented with negative durations!!
+    noteDuration *= -1.5; // increases the duration in half for dotted notes
+  }
+
+  // we only play the note for 90% of the duration, leaving 10% as a pause
+  tone(buzzer_pin, melodySong[thisNote], noteDuration * 0.9);
+
+  // Wait for the specief duration before playing the next note.
+  delay(noteDuration);
+
+  // stop the waveform generation before the next note.
+  noTone(buzzer_pin);
+}
